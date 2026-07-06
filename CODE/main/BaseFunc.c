@@ -75,10 +75,8 @@ void Start_LEDTask(void* pvParameters)
 	{
 		IWDG_ReloadCounter();
 		GPIO_WriteBit(BF_LED_GPIOX,BF_LED_Pin,Bit_RESET);
-		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_RESET);
 		vTaskDelay(400);
 		GPIO_WriteBit(BF_LED_GPIOX,BF_LED_Pin,Bit_SET);
-		GPIO_WriteBit(GPIOB,GPIO_Pin_15,Bit_SET);
 		vTaskDelay(600);
 	}
 }

@@ -10,7 +10,7 @@
       <TargetName>Target_1</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pArmCC>5060528::V5.06 update 5 (build 528)::.\ARMCC</pArmCC>
+      <pArmCC>5060528::V5.06 update 5 (build 528)::.\armcc</pArmCC>
       <pCCUsed>5060528::V5.06 update 5 (build 528)::.\armcc</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
@@ -341,7 +341,7 @@
               <MiscControls>--diag_suppress=870</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,USE_STM3210E_EVAL</Define>
               <Undefine></Undefine>
-              <IncludePath>..\st_core;..\st_lib;..\os_src;..\library;..\main;..\usb_conf;..\usb_core</IncludePath>
+              <IncludePath>..\st_core;..\st_lib;..\os_src;..\library;..\main;..\ui</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -808,156 +808,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>usb_core</GroupName>
-          <Files>
-            <File>
-              <FileName>usb_conf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_conf.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_core.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_core.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_def.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_def.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_endp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_endp.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_init.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_init.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_init.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_init.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_int.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_int.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_int.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_int.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_istr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_istr.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_istr.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_istr.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_lib.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_lib.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_mem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_mem.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_mem.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_mem.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_prop.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_prop.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_prop.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_prop.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_pwr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_pwr.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_pwr.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_pwr.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_regs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_regs.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_regs.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_regs.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_sil.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_core\usb_sil.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_sil.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_sil.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_type.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_core\usb_type.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>usb_conf</GroupName>
-          <Files>
-            <File>
-              <FileName>hw_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_conf\hw_config.c</FilePath>
-            </File>
-            <File>
-              <FileName>hw_config.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_conf\hw_config.h</FilePath>
-            </File>
-            <File>
-              <FileName>usb_desc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\usb_conf\usb_desc.c</FilePath>
-            </File>
-            <File>
-              <FileName>usb_desc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_conf\usb_desc.h</FilePath>
-            </File>
-            <File>
-              <FileName>Def_KeyBoard.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\usb_conf\Def_KeyBoard.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>library</GroupName>
           <Files>
             <File>
@@ -979,6 +829,91 @@
               <FileName>A_ADC.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\library\A_ADC.h</FilePath>
+            </File>
+            <File>
+              <FileName>TFT_ST7735.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\library\TFT_ST7735.c</FilePath>
+            </File>
+            <File>
+              <FileName>TFT_ST7735.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\library\TFT_ST7735.h</FilePath>
+            </File>
+            <File>
+              <FileName>P_PWM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\library\P_PWM.c</FilePath>
+            </File>
+            <File>
+              <FileName>P_PWM.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\library\P_PWM.h</FilePath>
+            </File>
+            <File>
+              <FileName>R_RTC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\library\R_RTC.c</FilePath>
+            </File>
+            <File>
+              <FileName>R_RTC.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\library\R_RTC.h</FilePath>
+            </File>
+            <File>
+              <FileName>TFT_DMA.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\library\TFT_DMA.h</FilePath>
+            </File>
+            <File>
+              <FileName>TFT_DMA.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\library\TFT_DMA.c</FilePath>
+            </File>
+            <File>
+              <FileName>W_W25QXX.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\library\W_W25QXX.c</FilePath>
+            </File>
+            <File>
+              <FileName>W_W25QXX.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\library\W_W25QXX.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ui</GroupName>
+          <Files>
+            <File>
+              <FileName>TFT_font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ui\TFT_font.c</FilePath>
+            </File>
+            <File>
+              <FileName>TFT_font.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ui\TFT_font.h</FilePath>
+            </File>
+            <File>
+              <FileName>qy_ascii_font.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ui\qy_ascii_font.h</FilePath>
+            </File>
+            <File>
+              <FileName>UI_DEF.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ui\UI_DEF.h</FilePath>
+            </File>
+            <File>
+              <FileName>UI_DEF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ui\UI_DEF.c</FilePath>
+            </File>
+            <File>
+              <FileName>qy_pic.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\ui\qy_pic.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1029,11 +964,6 @@
               <FileName>FreeRTOSConfig.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\main\FreeRTOSConfig.h</FilePath>
-            </File>
-            <File>
-              <FileName>QinYu_define.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\main\QinYu_define.h</FilePath>
             </File>
           </Files>
         </Group>

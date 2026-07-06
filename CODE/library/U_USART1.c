@@ -61,20 +61,29 @@ void U_USART1_Init(void)
 	USART_ITConfig(USART1,USART_IT_IDLE,ENABLE);
 }
 
+extern int8_t wq_trans;
+extern int8_t wq_usart;
 void USART1_IRQHandler(void)
 {
 	
 	if(USART_GetITStatus(USART1,USART_IT_IDLE)==SET)
 	{
-		//获取数据数量(254->DMA_BufferSize)
-		usart1_count = 254 - DMA_GetCurrDataCounter(DMA1_Channel5);
-		usart1_buff[usart1_count++] = '\0';
-		//重装DMA
-		DMA_Cmd(DMA1_Channel5,DISABLE);
-		DMA_SetCurrDataCounter(DMA1_Channel5,254);
-		DMA_Cmd(DMA1_Channel5,ENABLE);
-		//置标志位
-		usart1_isbuff = 1;
+		if(!wq_trans)
+		{
+			//获取数据数量(254->DMA_BufferSize)
+			usart1_count = 254 - DMA_GetCurrDataCounter(DMA1_Channel5);
+			usart1_buff[usart1_count++] = '\0';
+			//重装DMA
+			DMA_Cmd(DMA1_Channel5,DISABLE);
+			DMA_SetCurrDataCounter(DMA1_Channel5,254);
+			DMA_Cmd(DMA1_Channel5,ENABLE);
+			//置标志位
+			usart1_isbuff = 1;
+		}
+		else
+		{
+			wq_usart = 1;
+		}
 		//清除IDLE标志位
 		USART1->SR;
 		USART1->DR;

@@ -74,11 +74,15 @@ void Init_ADC(void)
   */
 void Task_ADC(void* pvParameters)
 {
-	uint32_t value_display[3];
+	uint32_t value_display[4];
 	uint8_t count = 0;		//采集100次数据求平均值
+	for(int i=0;i<(sizeof(value_display)/sizeof(uint32_t));i++)
+	{
+		value_display[i] = 0;
+	}
 	while(1)
 	{
-		vTaskDelay(5);
+		vTaskDelay(10);
 		if(count>=100)
 		{
 			for(int i=0;i<3;i++)
@@ -89,7 +93,7 @@ void Task_ADC(void* pvParameters)
 				value_display[i] /= 5;
 			}
 			count = 0;
-			U_Printf("ADC: %dmA\t%dmA\t%dmA \r\n",value_display[0],value_display[1],value_display[2]);
+			U_Printf("ADC: %dmA\t%dmA\t%dmA\t%dmA \r\n",value_display[0],value_display[1],value_display[2],value_display[3]);
 			for(int i=0;i<3;i++)
 			{
 				value_display[i] = 0;
