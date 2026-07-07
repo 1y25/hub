@@ -27,6 +27,7 @@ void Init_PWM(void)
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init(PWM_GPIOX,&GPIO_InitStruct);
 	GPIO_WriteBit(PWM_GPIOX,PWM_PIN,Bit_SET);//高电平亮
+	
 	//定时器初始化
 	TIM_InternalClockConfig(PWM_TIMX);
 	TIM_ARRPreloadConfig(PWM_TIMX,ENABLE);

@@ -27,9 +27,9 @@ void Start_MainTask(void* pvParameters)
 		//初始化函数-格式建议用Init_Xxx
 	Init_Func();
 	Init_ADC();
-	Init_PWM();
 	Init_TFTD();
 //	Init_TFT();
+	Init_PWM();
 	Init_WQ();
 //	Init_UI();
 	
