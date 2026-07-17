@@ -9,14 +9,18 @@
 #include "Func.h"
 /*  外设库  */
 #include "U_USART1.h"
-#include "A_ADC.h"
-#include "TFT_ST7735.h"
-#include "UI_DEF.h"
-#include "TFT_font.h"
+	//PWM->板子上那个呼吸的粉红色灯
 #include "P_PWM.h"
-#include "R_RTC.h"
+	//TFT屏幕
 #include "TFT_DMA.h"
-#include "W_W25QXX.h"
+
+/* 2026/7/17-12:51
+ * 写软件驱动好麻烦.....
+ * 正在大道至简，把所有初始化都删了
+ * 然后慢慢增加功能实现....
+ * 现在这个程序是hub.v2的程序...
+ *	.秦
+ */
 
 /**@brief  初始化线程
   */
@@ -26,23 +30,15 @@ void Start_MainTask(void* pvParameters)
 	Start_Func();
 		//初始化函数-格式建议用Init_Xxx
 	Init_Func();
-	Init_ADC();
-//	Init_TFTD();
-	Init_TFT();
 	Init_PWM();
-//	Init_WQ();
-//	Init_UI();
-	GPIO_WriteBit(GPIOA,GPIO_Pin_11,Bit_RESET);
-//	UI_Write_Num(50,100,34,FONT_PIXEL_2412,COLOR_YELLOW,COLOR_DARK_BLUE,3);
-	
+	Init_TFTD();
 	
 	//进入临界区
 	taskENTER_CRITICAL();
 		//线程函数-格式建议用Task_Xxx
 	xTaskCreate(Task_Func,"Func",64,NULL,1,NULL);
-	xTaskCreate(Task_PWM,"PWM",64,NULL,1,NULL);
-	xTaskCreate(Task_TFTD,"TFT_DMA",32,NULL,2,NULL);
-//	xTaskCreate(Task_WQ,"W25Qxx",32,NULL,1,NULL);
+	xTaskCreate(Task_PWM,"PWM",32,NULL,1,NULL);
+	
 	
 	//退出临界区
 	taskEXIT_CRITICAL();
@@ -53,6 +49,7 @@ void Start_MainTask(void* pvParameters)
 /**@brief  指令监听
   */
 uint8_t ram_hub[1024*2];
+extern int8_t usart1_isbuff;
 uint8_t Start_CommandFunc(void)
 {
 	if(Command("Start_CommandFunc"))
@@ -62,22 +59,39 @@ uint8_t Start_CommandFunc(void)
 	//添加区
 	else if(Command("COMMAND")||Command("HELP"))
 	{
-		U_Printf("这里是stm32f103c6t6的测试程序 \r\n");
-		U_Printf("现在在写hub相关驱动 \r\n");
+		U_Printf("这里是stm32f103c8t6的测试程序 \r\n");
+		U_Printf("现在在写hubV2相关驱动 \r\n");
 	}
-	else if(Command("TFTD"))
+	else if(Command("ReadyToReceivePicture"))
 	{
-		U_Printf("这里是TFT with DMA的命令程序: \r\n");
-		Cmd_TFTD();
-		U_Printf("命令程序结束 \r\n");
+		U_InitDMA();
+		vTaskDelay(1000);
+		while(usart1_isbuff==0);
+		vTaskDelay(8000);
+		U_Printf(ram_hub);
+		Init_TFTD();
 	}
-	else if(Command("WQ"))
+	else if(Command("TFT"))
 	{
-		U_Printf("这里是W25Qxx的命令测试程序： \r\n");
-		Cmd_WQ();
+		TFTD_SetRect(20,30,120,68);
+				//开始通信
+		TFTD_Start();
+				//DMA输出处理
+		for(int j=0;j<10;j++)
+		{
+			for(int i=0;i<12*68*2;i++)
+			{
+				ram_hub[i] = i;
+			}
+			DMA_Cmd(DMA1_Channel5,DISABLE);
+			DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
+			DMA_Cmd(DMA1_Channel5,ENABLE);
+			while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
+			DMA_ClearFlag(DMA1_FLAG_TC5);
+		}
+			//结束通信
+		TFTD_Stop();
 	}
-	
-	
 	//结束
 	else
 	{

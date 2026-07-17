@@ -14,18 +14,15 @@
  *	之后把那个大的电路板做完了还是用CodeX编程吧...
  *		2026/7/4-10:14
  */
-/*	SPI关键引脚：PA5/PA7(SPI1 DMA1_CH3->TX)
+/*	SPI关键引脚：PB13/PB15 (SPI2->DMA1_CH5)
  */
-/*	引脚配置:（hub屏幕-1.8寸）
- *	PA5	->SCK		SPI1
- *	PA6	->CS
- *	PA7	->DAT		SPI1
- *	PB0	->IOVCC
- *	PB1	->VCC
- *	PB10->DC
- *	PB11->RST
- *	PB14->LED+
- *	PB13->LED-
+/*	当前在进行>拓展坞v2<的屏幕适配
+ *	PB13	->SCK
+ *	PB15	->MOSI
+ *	PB14	->LED+
+ *	PB11	->RST
+ *	PB10	->DC
+ *	PB12	->CS
  */
 
 //RST ->PB11
@@ -34,35 +31,29 @@
 //DC  ->PB10
 #define PIN_TFTD_DC_Data()	GPIOB->BSRR = GPIO_Pin_10
 #define PIN_TFTD_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_10
-//CS  ->PA6
-#define PIN_TFTD_CS_High()	GPIOA->BSRR = GPIO_Pin_6
-#define PIN_TFTD_CS_Low()	GPIOA->BRR  = GPIO_Pin_6
+//CS  ->PB12
+#define PIN_TFTD_CS_High()	GPIOB->BSRR = GPIO_Pin_12
+#define PIN_TFTD_CS_Low()	GPIOB->BRR  = GPIO_Pin_12
 
 /**@brief  引脚初始化
   */
 static void Init_TFTD_Pin(void)
 {
 	//时钟初始化
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
 	//引脚初始化
-		//SPI1复用引脚
+		//SPI2复用引脚
 	GPIO_InitTypeDef GPIO_InitStruct;
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_7;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_15|GPIO_Pin_13;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA,&GPIO_InitStruct);
+	GPIO_Init(GPIOB,&GPIO_InitStruct);
 		//其他引脚
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6;
-	GPIO_Init(GPIOA,&GPIO_InitStruct);
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_13|GPIO_Pin_14;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12|GPIO_Pin_14;
 	GPIO_Init(GPIOB,&GPIO_InitStruct);
 	//给初始电平
-	GPIO_WriteBit(GPIOB,GPIO_Pin_0,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_1,Bit_SET);
 	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
 }
 
 #include "qy_pic.h"
@@ -72,13 +63,13 @@ extern uint8_t ram_hub[];
 void Init_TFTD(void)
 {
 	//时钟初始化
-		//SPI1
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1,ENABLE);
+		//SPI2
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2,ENABLE);
 		//DMA1
-//	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
 	//引脚初始化
 	Init_TFTD_Pin();
-	//SPI1初始化
+	//SPI2初始化
 	SPI_InitTypeDef SPI_InitStruct;
 	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
 	SPI_InitStruct.SPI_CPHA = SPI_CPHA_1Edge;
@@ -89,34 +80,34 @@ void Init_TFTD(void)
 	SPI_InitStruct.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStruct.SPI_Mode = SPI_Mode_Master;
 	SPI_InitStruct.SPI_NSS = SPI_NSS_Soft;
-	SPI_Init(SPI1,&SPI_InitStruct);
+	SPI_Init(SPI2,&SPI_InitStruct);
 	//启用SPI
-	SPI_Cmd(SPI1,ENABLE);
+	SPI_Cmd(SPI2,ENABLE);
 	//软件初始化
 	vTaskDelay(200);
 	TFTD_SoftwareInit();
 	//初始化完成后配置成16位
-	SPI_Cmd(SPI1,DISABLE);
+	SPI_Cmd(SPI2,DISABLE);
 	SPI_InitStruct.SPI_DataSize = SPI_DataSize_16b;
-	SPI_Init(SPI1,&SPI_InitStruct);
-	SPI_Cmd(SPI1,ENABLE);
+	SPI_Init(SPI2,&SPI_InitStruct);
+	SPI_Cmd(SPI2,ENABLE);
 	//DMA初始化
 	DMA_InitTypeDef DMA_InitStruct;
-	DMA_InitStruct.DMA_BufferSize = 1024*2;
+	DMA_InitStruct.DMA_BufferSize = 1024;
 	DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralDST;
 	DMA_InitStruct.DMA_M2M = DMA_M2M_Disable;
 	DMA_InitStruct.DMA_MemoryBaseAddr = (uint32_t)&ram_hub[0];
 	DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
 	DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStruct.DMA_Mode = DMA_Mode_Normal;
-	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&(SPI1->DR);
+	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&SPI2->DR;
 	DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
 	DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	DMA_InitStruct.DMA_Priority = DMA_Priority_Medium;
-	DMA_Init(DMA1_Channel3,&DMA_InitStruct);
-	DMA_Cmd(DMA1_Channel3,DISABLE);
-	DMA_ClearFlag(DMA1_FLAG_TC3);
-	SPI_I2S_DMACmd(SPI1,SPI_I2S_DMAReq_Tx,ENABLE);
+	DMA_Init(DMA1_Channel5,&DMA_InitStruct);
+	DMA_Cmd(DMA1_Channel5,DISABLE);
+	SPI_I2S_DMACmd(SPI2,SPI_I2S_DMAReq_Tx,ENABLE);
+	DMA_ClearFlag(DMA1_FLAG_TC5);
 	
 	//测试图像
 		//蓝粉白
@@ -150,14 +141,14 @@ void Init_TFTD(void)
 		{
 			ram_hub[i] = IMG_120_68[j*12*68*2+i];
 		}
-		DMA_Cmd(DMA1_Channel3,DISABLE);
-		DMA_SetCurrDataCounter(DMA1_Channel3,12*68);
-		DMA_Cmd(DMA1_Channel3,ENABLE);
-		while(DMA_GetFlagStatus(DMA1_FLAG_TC3)!=SET);
-		DMA_ClearFlag(DMA1_FLAG_TC3);
+		DMA_Cmd(DMA1_Channel5,DISABLE);
+		DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
+		DMA_Cmd(DMA1_Channel5,ENABLE);
+		while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
+		DMA_ClearFlag(DMA1_FLAG_TC5);
 	}
 			//结束通信
-	PIN_TFTD_CS_High();
+	TFTD_Stop();
 	
 	U_Printf("TFT_withDMA初始化完成 \r\n");
 }
@@ -176,18 +167,18 @@ void TFTD_WriteCmd(uint8_t cmd)
 {
 	PIN_TFTD_DC_Cmd();
 	PIN_TFTD_CS_Low();
-	SPI_I2S_SendData(SPI1,cmd);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)!=SET);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET);
+	SPI_I2S_SendData(SPI2,cmd);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_TXE)!=SET);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_BSY)==SET);
 	PIN_TFTD_CS_High();
 }
 void TFTD_WriteData(uint8_t data)
 {
 	PIN_TFTD_DC_Data();
 	PIN_TFTD_CS_Low();
-	SPI_I2S_SendData(SPI1,data);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)!=SET);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET);
+	SPI_I2S_SendData(SPI2,data);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_TXE)!=SET);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_BSY)==SET);
 	PIN_TFTD_CS_High();
 }
 void TFTD_SetRect(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
@@ -208,9 +199,9 @@ void TFTD_WriteData16(uint16_t rgb565)
 	PIN_TFTD_DC_Data();
 	//片选选中	
 	PIN_TFTD_CS_Low();
-	SPI_I2S_SendData(SPI1,rgb565);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)!=SET);
-	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET);
+	SPI_I2S_SendData(SPI2,rgb565);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_TXE)!=SET);
+	while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_BSY)==SET);
 	//片选结束
 	PIN_TFTD_CS_High();
 }
