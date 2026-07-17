@@ -9,12 +9,12 @@
 
 /**@brief  PWM初始化
   */
-#define PWM_RCCX	RCC_APB2Periph_GPIOB
+#define PWM_RCCX	RCC_APB2Periph_GPIOA
 #define PWM_RCCTIM	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1,ENABLE)
-#define PWM_GPIOX	GPIOB
-#define PWM_PIN		GPIO_Pin_15
+#define PWM_GPIOX	GPIOA
+#define PWM_PIN		GPIO_Pin_11
 #define PWM_TIMX	TIM1
-#define PWM_CHX		3
+#define PWM_CHX		4
 void Init_PWM(void)
 {
 	//时钟初始化
@@ -41,7 +41,7 @@ void Init_PWM(void)
 	//PWM初始化
 	TIM_CtrlPWMOutputs(PWM_TIMX,ENABLE);
 	TIM_OCInitTypeDef PWM_InitStruct;
-	PWM_InitStruct.TIM_OCMode = TIM_OCMode_PWM1;
+	PWM_InitStruct.TIM_OCMode = TIM_OCMode_PWM2;
 	PWM_InitStruct.TIM_OCPolarity = TIM_OCPolarity_Low;
 	PWM_InitStruct.TIM_OutputState = TIM_OutputState_Enable;
 	PWM_InitStruct.TIM_Pulse = 9;
@@ -82,7 +82,7 @@ void Task_PWM(void* pvParameters)
 			vTaskDelay(1000);
 			position = -1;
 		}
-		else if(pwm_pulse<=2)
+		else if(pwm_pulse<=0)
 		{
 			vTaskDelay(1000);
 			position = 1;

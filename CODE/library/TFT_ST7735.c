@@ -31,32 +31,29 @@
  *  低电平:  GPIOx->BSRR = GPIO_Pin;
  *	当前配置为软件 可根据引脚配置成硬件SPI配置
  */
-/*	当前在进行>拓展坞<的屏幕适配
- *	PA5	->SCK
- *	PA6	->CS
- *	PA7	->DAT
- *	PB0	->IOVCC
- *	PB1	->VCC
- *	PB10->DC
- *	PB11->RST
- *	PB14->LED+
- *	PB13->LED-
+/*	当前在进行>拓展坞v2<的屏幕适配
+ *	PB13	->SCK
+ *	PB15	->MOSI
+ *	PB14	->LED+
+ *	PB11	->RST
+ *	PB10	->DC
+ *	PB12	->CS
  */
-//SCL ->PA5
-#define PIN_TFT_SCL_High() 	GPIOA->BSRR = GPIO_Pin_5
-#define PIN_TFT_SCL_Low() 	GPIOA->BRR  = GPIO_Pin_5
-//SDA ->PA7
-#define PIN_TFT_SDA_High() 	GPIOA->BSRR = GPIO_Pin_7
-#define PIN_TFT_SDA_Low()	GPIOA->BRR  = GPIO_Pin_7
+//SCL ->PB13
+#define PIN_TFT_SCL_High() 	GPIOB->BSRR = GPIO_Pin_13
+#define PIN_TFT_SCL_Low() 	GPIOB->BRR  = GPIO_Pin_13
+//SDA ->PB15
+#define PIN_TFT_SDA_High() 	GPIOB->BSRR = GPIO_Pin_15
+#define PIN_TFT_SDA_Low()	GPIOB->BRR  = GPIO_Pin_15
 //RST ->PB11
 #define PIN_TFT_RST_High()	GPIOB->BSRR = GPIO_Pin_11
 #define PIN_TFT_RST_Low()	GPIOB->BRR  = GPIO_Pin_11
 //DC  ->PB10
 #define PIN_TFT_DC_Data()	GPIOB->BSRR = GPIO_Pin_10
 #define PIN_TFT_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_10
-//CS  ->PA6
-#define PIN_TFT_CS_High()	GPIOA->BSRR = GPIO_Pin_6
-#define PIN_TFT_CS_Low()	GPIOA->BRR  = GPIO_Pin_6
+//CS  ->PB12
+#define PIN_TFT_CS_High()	GPIOB->BSRR = GPIO_Pin_12
+#define PIN_TFT_CS_Low()	GPIOB->BRR  = GPIO_Pin_12
 
 /**@brief  内部使用 TFT屏幕相关引脚初始化 日后根据需要修改
   *@param  void
@@ -65,21 +62,15 @@
 static void Init_TFTPin(void)
 {
 	//时钟初始化
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
 	//引脚初始化
 	GPIO_InitTypeDef GPIO_InitStruct;
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(GPIOA,&GPIO_InitStruct);
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_14|GPIO_Pin_13;
 	GPIO_Init(GPIOB,&GPIO_InitStruct);
 	//给初始电平
-	GPIO_WriteBit(GPIOB,GPIO_Pin_0,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_1,Bit_SET);
 	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
-	GPIO_WriteBit(GPIOB,GPIO_Pin_13,Bit_RESET);
 }
 
 /**  以下是接口相关部分  **/

@@ -27,12 +27,12 @@ void Start_MainTask(void* pvParameters)
 		//初始化函数-格式建议用Init_Xxx
 	Init_Func();
 	Init_ADC();
-	Init_TFTD();
-//	Init_TFT();
+//	Init_TFTD();
+	Init_TFT();
 	Init_PWM();
-	Init_WQ();
+//	Init_WQ();
 //	Init_UI();
-	
+	GPIO_WriteBit(GPIOA,GPIO_Pin_11,Bit_RESET);
 //	UI_Write_Num(50,100,34,FONT_PIXEL_2412,COLOR_YELLOW,COLOR_DARK_BLUE,3);
 	
 	
@@ -42,7 +42,7 @@ void Start_MainTask(void* pvParameters)
 	xTaskCreate(Task_Func,"Func",64,NULL,1,NULL);
 	xTaskCreate(Task_PWM,"PWM",64,NULL,1,NULL);
 	xTaskCreate(Task_TFTD,"TFT_DMA",32,NULL,2,NULL);
-	xTaskCreate(Task_WQ,"W25Qxx",32,NULL,1,NULL);
+//	xTaskCreate(Task_WQ,"W25Qxx",32,NULL,1,NULL);
 	
 	//退出临界区
 	taskEXIT_CRITICAL();
