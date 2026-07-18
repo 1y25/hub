@@ -1,5 +1,6 @@
 #include "U_USART1.h"
 #include "stm32f10x.h"                  // Device header
+#include "TFT_DMA.h"
 
 uint8_t usart1_buff[64];
 uint16_t usart1_count = 0;
@@ -77,9 +78,6 @@ void USART1_IRQHandler(void)
 		else if(usart1_isdma==1)
 		{
 			usart1_count = 2048 - DMA_GetCurrDataCounter(DMA1_Channel5);
-			ram_hub[usart1_count] = '\0';
-			U_Printf("这里是115200波特率\r\n");
-			U_DeInitDMA();
 			usart1_isbuff = 1;
 		}
 		USART1->SR;
@@ -141,6 +139,7 @@ void U_InitDMA(void)
 void U_DeInitDMA(void)
 {
 	usart1_isdma = 0;
+	usart1_isbuff = 0;
 	DMA_Cmd(DMA1_Channel5,DISABLE);
 	USART_DMACmd(USART1,USART_DMAReq_Rx,DISABLE);	
 	//波特率调整为9600
@@ -154,6 +153,7 @@ void U_DeInitDMA(void)
 	USART_InitStruct.USART_WordLength = USART_WordLength_8b;
 	USART_Init(USART1,&USART_InitStruct);
 	USART_Cmd(USART1,ENABLE);
+	Init_TFTD();
 	U_Printf("\r\n传输数据结束，波特率调整回9600 \r\n");
 }
 

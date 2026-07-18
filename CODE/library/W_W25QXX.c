@@ -86,7 +86,7 @@ void Init_WQ(void)
 	//SPI1初始化
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1,ENABLE);
 	SPI_InitTypeDef SPI_InitStruct;
-	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_128;
+	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
 	SPI_InitStruct.SPI_CPHA = SPI_CPHA_1Edge;//上升沿读取，Mode0
 	SPI_InitStruct.SPI_CPOL = SPI_CPOL_Low;
 	SPI_InitStruct.SPI_CRCPolynomial = 7;
@@ -97,6 +97,40 @@ void Init_WQ(void)
 	SPI_InitStruct.SPI_NSS = SPI_NSS_Soft;
 	SPI_Init(SPI1,&SPI_InitStruct);
 	SPI_Cmd(SPI1,ENABLE);
+	//DMA初始化（SPI1_TX->DMA1_CH3 , SPI1_RX->DMA1_CH2）
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
+	DMA_InitTypeDef DMA_InitStruct;
+		//SPI1_TX->DMA1_CH3
+	SPI_I2S_DMACmd(SPI1,SPI_I2S_DMAReq_Tx,ENABLE);
+	DMA_InitStruct.DMA_BufferSize = 2048;
+	DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralDST;
+	DMA_InitStruct.DMA_M2M = DMA_M2M_Disable;
+	DMA_InitStruct.DMA_MemoryBaseAddr = (uint32_t)&ram_hub[0];
+	DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStruct.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DR;
+	DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStruct.DMA_Priority = DMA_Priority_Medium;
+	DMA_Init(DMA1_Channel3,&DMA_InitStruct);
+	DMA_Cmd(DMA1_Channel3,DISABLE);
+		//SPI1_RX->DMA1_CH2
+	SPI_I2S_DMACmd(SPI1,SPI_I2S_DMAReq_Rx,ENABLE);
+	DMA_InitStruct.DMA_BufferSize = 2048;
+	DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralSRC;
+	DMA_InitStruct.DMA_M2M = DMA_M2M_Disable;
+	DMA_InitStruct.DMA_MemoryBaseAddr = (uint32_t)&ram_hub[0];
+	DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStruct.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DR;
+	DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStruct.DMA_Priority = DMA_Priority_Medium;
+	DMA_Init(DMA1_Channel2,&DMA_InitStruct);
+	DMA_Cmd(DMA1_Channel2,DISABLE);
+	
 	//读序列号
 	WQ_Start();
 	WQ_Swap(0x9F);
@@ -105,9 +139,127 @@ void Init_WQ(void)
 	U_Printf("%h",WQ_Swap(0xFF));
 	U_Printf("%h \r\n",WQ_Swap(0xFF));
 	WQ_Stop();
-	//试着写入与读出
 	
 	U_Printf("W25Q64初始化完成 \r\n");
+	
+//	//测试RAM写入
+//	uint16_t* temp_ram = (uint16_t*)&ram_hub[0];
+//	for(int i=0;i<1024;i++)
+//	{
+//		temp_ram[i] = i;
+//	}
+//		//擦除
+//	WQ_Erease(0x002000);
+//		//写入
+//	WQ_RamWrite(0x002000,0);
+//	for(int i=0;i<1024;i++)
+//	{
+//		temp_ram[i] = 0x0;
+//	}
+//		//读取
+//	WQ_RamRead(0x002000,0);
+//	for(int i=0;i<1024;i++)
+//	{
+//		U_Printf("%d ",temp_ram[i]);
+//	}
+//	U_Printf("\r\n 完成. \r\n");
+}
+/**@brief  来自hub的项目，把ram_hub[2048]写入地址
+  *@param  addr_xxx000 地址(最小可擦除地址)
+  *@param  front	   写入地址，2048=2^11，最小可擦除是2^12，所以分成上下两部分
+  *@retval void
+  */
+void WQ_RamWrite(uint32_t addr,int8_t front)
+{
+	addr<<=12;
+	if(front!=0)
+	{
+		addr += 0x800;
+	}
+	for(int i=0;i<0x8;i++)
+	{
+		//修改ram地址
+		DMA_InitTypeDef DMA_InitStruct;
+		DMA_InitStruct.DMA_BufferSize = 256;
+		DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralDST;
+		DMA_InitStruct.DMA_M2M = DMA_M2M_Disable;
+		DMA_InitStruct.DMA_MemoryBaseAddr = (uint32_t)&ram_hub[256*i];
+		DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+		DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
+		DMA_InitStruct.DMA_Mode = DMA_Mode_Normal;
+		DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DR;
+		DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+		DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+		DMA_InitStruct.DMA_Priority = DMA_Priority_Medium;
+		DMA_Init(DMA1_Channel3,&DMA_InitStruct);
+		//修改写入地址
+		WQ_WriteStart(addr);
+		//开DMA写入
+		DMA_SetCurrDataCounter(DMA1_Channel3,256);
+		DMA_Cmd(DMA1_Channel3,ENABLE);
+		DMA_ClearFlag(DMA1_FLAG_TC3);
+		while(DMA_GetFlagStatus(DMA1_FLAG_TC3)!=SET);
+		DMA_Cmd(DMA1_Channel3,DISABLE);
+		//写入完成，结束通信
+		WQ_WriteStop();
+		WQ_WaitProcess();
+		addr += 256;
+	}
+}
+/**@brief  来自hub的项目，用ram_hub[2048]读出
+  *@param  addr_xxx	 	地址，自动补充后面三个0
+  *@param  front       	读前半部分
+  */
+void WQ_RamRead(uint32_t addr,int8_t front)
+{
+	addr<<=12;
+	if(front!=0)
+	{
+		addr += 0x800;
+	}
+		//DMA读取
+	WQ_ReadStart(addr);
+		//读
+	DMA_Cmd(DMA1_Channel2,DISABLE);
+	DMA_SetCurrDataCounter(DMA1_Channel2,2048);
+	DMA_Cmd(DMA1_Channel2,ENABLE);	
+	DMA_ClearFlag(DMA1_FLAG_TC2);	
+		//写
+	DMA_Cmd(DMA1_Channel3,DISABLE);
+	DMA_SetCurrDataCounter(DMA1_Channel3,2048);
+	DMA_Cmd(DMA1_Channel3,ENABLE);
+	DMA_ClearFlag(DMA1_FLAG_TC3);
+	while(DMA_GetFlagStatus(DMA1_FLAG_TC3)!=SET);
+	while(DMA_GetFlagStatus(DMA1_FLAG_TC2)!=SET);
+	WQ_ReadStop();
+	DMA_Cmd(DMA1_Channel3,DISABLE);
+	DMA_Cmd(DMA1_Channel2,DISABLE);
+}
+/**@brief  测试内容
+  */
+void WQ_Test(void)
+{
+	//试着写入与读出
+	WQ_WriteEnable();
+	WQ_Erease(0x1234);
+	WQ_WriteEnable();
+	uint8_t test_words[10];
+	for(int i=0;i<10;i++)
+	{
+		test_words[i] = i+1;
+	}
+	WQ_Write(0x1234,test_words,10);
+	WQ_WaitProcess();
+	for(int i=0;i<10;i++)
+	{
+		test_words[i] = 0;
+	}
+	WQ_Read(0x1234,test_words,10);
+	for(int i=0;i<10;i++)
+	{
+		U_Printf("[%d]:%d \r\n",i,test_words[i]);
+	}
+	
 }
 /**@brief  SPI开始通信
   */
@@ -121,6 +273,37 @@ void WQ_Stop(void)
 {
 	PIN_WQ_CS_H();
 }
+void WQ_WriteStart(uint32_t addr_xxxx00)
+{
+	WQ_WriteEnable();
+	WQ_Start();
+	WQ_Swap(0x02);
+		//写地址
+	WQ_Swap((addr_xxxx00>>16));
+	WQ_Swap(((addr_xxxx00>>8)&0xFF));
+	WQ_Swap((addr_xxxx00&0xFF));
+}
+void WQ_WriteStop()
+{
+	WQ_Stop();
+	WQ_WaitProcess();
+}
+void WQ_ReadStart(uint32_t addr)
+{
+	WQ_Start();
+	WQ_Swap(0x0B);
+		//写地址
+	WQ_Swap((addr>>16));
+	WQ_Swap(((addr>>8)&0xFF));
+	WQ_Swap((addr&0xFF));
+	WQ_Swap(0xFF);
+}
+void WQ_ReadStop(void)
+{
+	WQ_Stop();
+}
+
+
 /**@brief  交换
   */
 uint8_t WQ_Swap(uint8_t data)
@@ -132,15 +315,80 @@ uint8_t WQ_Swap(uint8_t data)
 	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_BSY)==SET);
 	return SPI_I2S_ReceiveData(SPI1);
 }
+/**@brief  等待操作完成
+  */
+void WQ_WaitProcess(void)
+{
+	WQ_Start();
+	WQ_Swap(0x05);
+	uint8_t aaa = WQ_Swap(0x05);
+	while((aaa&0x01)==1)
+	{
+		U_Printf("wait wq write enable\r\n");
+		aaa = WQ_Swap(0x05);
+	}
+	WQ_Stop();
+}
 /**@brief  寄存器写使能
   */
 void WQ_WriteEnable(void)
 {
 	WQ_Start();
 	WQ_Swap(0x06);
-	WQ_Swap(0xFF);
+	WQ_Stop();
+	WQ_WaitProcess();
+}
+/**@brief  写入
+  */
+void WQ_Write(uint32_t addr_xxxx00,uint8_t* bytes,uint16_t length)
+{
+	WQ_Start();
+	WQ_Swap(0x02);
+		//写地址
+	WQ_Swap((addr_xxxx00>>16));
+	WQ_Swap(((addr_xxxx00>>8)&0xFF));
+	WQ_Swap((addr_xxxx00&0xFF));
+		//写数据
+	for(int i=0;i<length;i++)
+	{
+		WQ_Swap(bytes[i]);
+	}
 	WQ_Stop();
 }
+/**@brief  读取
+  */
+void WQ_Read(uint32_t addr,uint8_t* bytes,uint16_t length)
+{
+	WQ_Start();
+	WQ_Swap(0x0B);
+		//写地址
+	WQ_Swap((addr>>16));
+	WQ_Swap(((addr>>8)&0xFF));
+	WQ_Swap((addr&0xFF));
+	WQ_Swap(0xFF);
+		//读数据
+	for(int i=0;i<length;i++)
+	{
+		bytes[i] = WQ_Swap(0xFF);
+	}
+	WQ_Stop();
+}
+/**@brief  擦除
+  */
+void WQ_Erease(uint32_t addr_xxx)
+{	
+	addr_xxx<<=12;
+	WQ_WriteEnable();
+	WQ_Start();
+	WQ_Swap(0x20);
+		//写地址
+	WQ_Swap((addr_xxx>>16));
+	WQ_Swap(((addr_xxx>>8)&0xFF));
+	WQ_Swap((addr_xxx&0xFF));
+	WQ_Stop();
+	WQ_WaitProcess();
+}
+
 
 
 

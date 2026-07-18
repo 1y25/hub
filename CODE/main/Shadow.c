@@ -52,7 +52,10 @@ void Start_MainTask(void* pvParameters)
 /**@brief  指令监听
   */
 uint8_t ram_hub[1024*2];
+extern uint8_t usart1_buff[64];
 extern int8_t usart1_isbuff;
+extern uint16_t usart1_count;
+uint16_t F4_data[3];//长0-宽1-传输次数2
 uint8_t Start_CommandFunc(void)
 {
 	if(Command("Start_CommandFunc"))
@@ -65,14 +68,50 @@ uint8_t Start_CommandFunc(void)
 		U_Printf("这里是stm32f103c8t6的测试程序 \r\n");
 		U_Printf("现在在写hubV2相关驱动 \r\n");
 	}
-	else if(Command("ReadyToReceivePicture"))
+	else if(Command("WritePic"))
+	{//WritePic-xxx-xxx-xxx	//长-宽-传输次数
+		for(int i=0;i<20;i++)
+		{
+			usart1_buff[i]-='0';
+		}
+		F4_data[0] = usart1_buff[9]*100;
+		F4_data[0] += usart1_buff[10]*10;
+		F4_data[0] += usart1_buff[11];
+		F4_data[1] = usart1_buff[13]*100;
+		F4_data[1] += usart1_buff[14]*10;
+		F4_data[1] += usart1_buff[15];
+		F4_data[2] = usart1_buff[17]*100;
+		F4_data[2] += usart1_buff[18]*10;
+		F4_data[2] += usart1_buff[19];
+		U_Printf("接收到:[%d-%d-%d] \r\n",F4_data[0],F4_data[1],F4_data[2]);
+	}
+	else if(Command("TTT"))
 	{
+		//进入含DMA的115200传输
 		U_InitDMA();
-		vTaskDelay(1000);
+		//等待
 		while(usart1_isbuff==0);
-		vTaskDelay(8000);
-		U_Printf(ram_hub);
-		Init_TFTD();
+		
+		//接收到数据
+		WQ_Erease(0x22);
+		WQ_RamWrite(0x22,1);
+		U_Printf("115200传输结束，改回9600 \r\n");
+		vTaskDelay(7000);
+		
+		U_DeInitDMA();
+	}
+	else if(Command("READ"))
+	{
+		U_Printf("啊？ \r\n");
+		for(int i=0;i<2048;i++)
+		{
+			ram_hub[i] = 'a';
+		}
+		WQ_RamRead(0x22,1);
+		for(int i=0;i<2048;i++)
+		{
+			U_Putchar(ram_hub[i]);
+		}
 	}
 	else if(Command("TFT"))
 	{
