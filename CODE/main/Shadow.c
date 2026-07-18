@@ -13,6 +13,8 @@
 #include "P_PWM.h"
 	//TFT屏幕
 #include "TFT_DMA.h"
+	//W25Q64存储芯片
+#include "W_W25QXX.h"
 
 /* 2026/7/17-12:51
  * 写软件驱动好麻烦.....
@@ -32,6 +34,7 @@ void Start_MainTask(void* pvParameters)
 	Init_Func();
 	Init_PWM();
 	Init_TFTD();
+	Init_WQ();
 	
 	//进入临界区
 	taskENTER_CRITICAL();

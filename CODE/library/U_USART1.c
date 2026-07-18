@@ -214,7 +214,7 @@ char HexToChar(uint8_t hex)
   */
 void U_SendHex(uint32_t hex)
 {
-	U_SendWords("0x");
+//	U_SendWords("0x");
 	if(hex==0)
 	{
 		U_Putchar('0');
