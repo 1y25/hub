@@ -6,8 +6,8 @@
 #include "W_W25QXX.h"
 #include "TFT_DMA.h"
 
-pic_infor PIC_INFO[3];
-uint8_t pic_index = 0;
+pic_infor PIC_INFO[4];
+uint8_t pic_index = 1;
 extern uint8_t ram_hub[1024*2];
 extern uint8_t usart1_buff[64];
 extern int8_t usart1_isbuff;
@@ -48,7 +48,6 @@ void Read_Pic(void)
 	param_a[4] += usart1_buff[26]*10;
 	param_a[4] += usart1_buff[27];
 //	U_Printf("次数:%d \t长:%d 宽:%d\t第%d张第%d帧 \r\n",param_a[0],param_a[1],param_a[2],param_a[3],param_a[4]);
-	param_a[3] -= 1;
 	param_a[4] -= 1;
 	uint8_t index = param_a[3];
 	PIC_INFO[index].wq_times = param_a[0];
@@ -57,12 +56,16 @@ void Read_Pic(void)
 	PIC_INFO[index].pixel_count = param_a[1]*param_a[2];
 	PIC_INFO[index].frame = param_a[4];
 	
-	uint16_t addr = (index<<8)+(param_a[4]<<4);
+	uint8_t pic_index = index;
+	pic_index *= 2;
+	pic_index -= 1;
+	uint16_t addr = (pic_index<<8)+(param_a[4]*11);
+	
 	
 	U_Printf("ReadyToReadPic \r\n");
-	vTaskDelay(200);
+	vTaskDelay(100);
 	U_InitDMA();	//把USART初始化为115200
-	vTaskDelay(500);
+	vTaskDelay(100);
 	for(int i=0;i<param_a[0];i++)
 	{
 		WQ_Erease(addr+i);
@@ -81,12 +84,15 @@ void Read_Pic(void)
 	vTaskDelay(100);
 	U_DeInitDMA();
 	
-	ShowPic_WithFrame(index);
+//	ShowPic_WithFrame(index);
+	Show_Pic(index,param_a[4]);
 	WritePicInfo();
 }
 void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 {
-	uint16_t addr = (pic_index<<8)+(frame_index<<4);
+	uint16_t temp_addr = pic_index*2;
+	temp_addr -= 1;
+	uint16_t addr = (temp_addr<<8)+(frame_index*11);
 	uint32_t pixel_counts = PIC_INFO[pic_index].pixel_count;
 	uint16_t x = (162-PIC_INFO[pic_index].width)/2;
 	uint16_t y = (130-PIC_INFO[pic_index].height)/2;
@@ -116,9 +122,9 @@ void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 }
 void ReadPicInfo(void)
 {
-	WQ_RamRead(0x600,0);
-	uint32_t* temp_ram = &ram_hub[0];
-	for(int i=0;i<3;i++)
+	WQ_RamRead(0,0);
+	uint32_t* temp_ram = (uint32_t*)&ram_hub[0];
+	for(int i=0;i<4;i++)
 	{
 		PIC_INFO[i].frame			=	temp_ram[i*10+0];
 		PIC_INFO[i].height			=   temp_ram[i*10+1];
@@ -126,14 +132,18 @@ void ReadPicInfo(void)
 		PIC_INFO[i].pixel_count		=   temp_ram[i*10+3];
 		PIC_INFO[i].width			=   temp_ram[i*10+4];
 		PIC_INFO[i].wq_times		=   temp_ram[i*10+5];
-		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
+		if(i==0)
+		{
+			continue;
+		}
+//		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
 	}
 }
 void WritePicInfo(void)
 {
-	WQ_Erease(0x600);
-	uint32_t* temp_ram = &ram_hub[0];
-	for(int i=0;i<3;i++)
+	WQ_Erease(0);
+	uint32_t* temp_ram = (uint32_t*)&ram_hub[0];
+	for(int i=0;i<4;i++)
 	{
 		temp_ram[i*10+0] = PIC_INFO[i].frame;
 		temp_ram[i*10+1] = PIC_INFO[i].height;
@@ -142,7 +152,7 @@ void WritePicInfo(void)
 		temp_ram[i*10+4] = PIC_INFO[i].width;
 		temp_ram[i*10+5] = PIC_INFO[i].wq_times;
 	}
-	WQ_RamWrite(0x600,0);
+	WQ_RamWrite(0,0);
 }
 void ShowPic_WithFrame(uint8_t index)
 {

@@ -2,8 +2,6 @@ import serial
 import time
 import re
 import sys
-import os
-import argparse
 
 # ================== 配置 ==================
 PORT = "COM3"          # 改成你的串口
@@ -55,59 +53,23 @@ def format_cmd(packet_count, width, height, a, b):
 
 # ================== 主流程 ==================
 def main():
-    if __name__ == "__main__":
+    file_path = input("请输入C文件路径: ").strip()
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "folder",
-            help="图片c文件目录"
-        )
-
-        parser.add_argument(
-            "index",
-            type=int,
-            help="图片下标"
-        )
-
-        parser.add_argument(
-            "count",
-            type=int,
-            help="图片数量"
-        )
-
-        args = parser.parse_args()
-
-
-        batch_send(
-            args.folder,
-            args.index,
-            args.count
-        )
-
-        
-        time.sleep(3)
-        ser = serial.Serial(PORT, LOW_BAUD, timeout=5)
-        print("图片烧录结束，重启单片机")
-        cmd = "RESET"
-        ser.write(cmd.encode())
-        ser.close()
-
-
-
-
-def send_image(file_path,user_a,user_b):
     # 解析数据
     data, width, height = parse_c_array(file_path)
 
     # 获取宽高
     print(f"📐 图像尺寸: {width}x{height}")
 
+    # 用户参数
+    a = int(input("图片下标："))
+    b = int(input("帧下标："))
 
     # 计算包数
     packet_count = (len(data) + PACKET_SIZE - 1) // PACKET_SIZE
 
     # 生成命令
-    cmd = format_cmd(packet_count, width, height, user_a, user_b)
+    cmd = format_cmd(packet_count, width, height, a, b)
 
     # ================== 第一阶段：9600握手 ==================
     ser = serial.Serial(PORT, LOW_BAUD, timeout=5)
@@ -189,45 +151,6 @@ def send_image(file_path,user_a,user_b):
 
     ser.close()
 
-
-
-def batch_send(folder, pic_index, frame_count):
-
-    for frame in range(1, frame_count + 1):
-
-        file_path = os.path.join(
-            folder,
-            f"{frame}.c"
-        )
-
-        if not os.path.exists(file_path):
-            print(f"❌ 找不到 {file_path}")
-            continue
-
-
-        print("\n====================")
-        print(f"开始发送第 {frame} 帧")
-        print("====================")
-
-
-        # 用户变量
-        user_a = pic_index
-        user_b = frame
-
-
-        send_image(
-            file_path,
-            user_a,
-            user_b
-        )
-
-
-        print(
-            f"✅ 第 {frame} 帧完成"
-        )
-
-
-        time.sleep(1)
 
 # ================== 入口 ==================
 if __name__ == "__main__":

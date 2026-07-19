@@ -154,7 +154,7 @@ void U_DeInitDMA(void)
 	USART_Init(USART1,&USART_InitStruct);
 	USART_Cmd(USART1,ENABLE);
 	Init_TFTD();
-	U_Printf("\r\n传输数据结束，波特率调整回9600 \r\n");
+//	U_Printf("\r\n传输数据结束，波特率调整回9600 \r\n");
 }
 
 /*  下方是U_Printf实现部分，耦合性很低（没有），可移植  */

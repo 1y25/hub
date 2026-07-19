@@ -36,7 +36,6 @@ void Start_MainTask(void* pvParameters)
 	Init_TFTD();
 	Init_WQ();
 	ReadPicInfo();
-	Show_Pic(0,0);
 	
 	//进入临界区
 	taskENTER_CRITICAL();
@@ -85,14 +84,13 @@ uint8_t Start_CommandFunc(void)
 	}
 	else if(Command("ReadInfo"))
 	{
-		for(int i=0;i<3;i++)
-		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
-		U_Printf("aaaa \r\n");
 		ReadPicInfo();
+		for(int i=1;i<4;i++)
+		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
 	}
 	else if(Command("CHPIC"))
 	{
-		pic_index = usart1_buff[6]-'1';
+		pic_index = usart1_buff[6]-'0';
 		U_Printf("更换到%d张图片 \r\n",pic_index);
 	}
 	else if(Command("TTT"))

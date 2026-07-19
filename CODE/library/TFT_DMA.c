@@ -130,26 +130,26 @@ void Init_TFTD(void)
 	{
 		TFTD_WriteData16(blue);
 	}
-		//输出Smol Miku
-	TFTD_SetRect(20,30,120,68);
-			//开始通信
-	TFTD_Start();
-			//DMA输出处理
-	for(int j=0;j<10;j++)
-	{
-		for(int i=0;i<12*68*2;i++)
-		{
-			ram_hub[i] = IMG_120_68[j*12*68*2+i];
-		}
-		DMA_Cmd(DMA1_Channel5,DISABLE);
-		DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
-		DMA_Cmd(DMA1_Channel5,ENABLE);
-		while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
-		DMA_ClearFlag(DMA1_FLAG_TC5);
-	}
-			//结束通信
-	TFTD_Stop();
-	
+//		//输出Smol Miku
+//	TFTD_SetRect(20,30,120,68);
+//			//开始通信
+//	TFTD_Start();
+//			//DMA输出处理
+//	for(int j=0;j<10;j++)
+//	{
+//		for(int i=0;i<12*68*2;i++)
+//		{
+//			ram_hub[i] = IMG_120_68[j*12*68*2+i];
+//		}
+//		DMA_Cmd(DMA1_Channel5,DISABLE);
+//		DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
+//		DMA_Cmd(DMA1_Channel5,ENABLE);
+//		while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
+//		DMA_ClearFlag(DMA1_FLAG_TC5);
+//	}
+//			//结束通信
+//	TFTD_Stop();
+//	
 	U_Printf("TFT_withDMA初始化完成 \r\n");
 }
 void Task_TFTD(void* pvParameters)
