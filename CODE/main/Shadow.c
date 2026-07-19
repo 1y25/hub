@@ -35,6 +35,8 @@ void Start_MainTask(void* pvParameters)
 	Init_PWM();
 	Init_TFTD();
 	Init_WQ();
+	ReadPicInfo();
+	Show_Pic(0,0);
 	
 	//进入临界区
 	taskENTER_CRITICAL();
@@ -51,11 +53,12 @@ void Start_MainTask(void* pvParameters)
 
 /**@brief  指令监听
   */
+extern pic_infor PIC_INFO[];
+extern uint8_t pic_index;
 uint8_t ram_hub[1024*2];
 extern uint8_t usart1_buff[64];
 extern int8_t usart1_isbuff;
 extern uint16_t usart1_count;
-uint16_t F4_data[3];//长0-宽1-传输次数2
 uint8_t Start_CommandFunc(void)
 {
 	if(Command("Start_CommandFunc"))
@@ -69,21 +72,28 @@ uint8_t Start_CommandFunc(void)
 		U_Printf("现在在写hubV2相关驱动 \r\n");
 	}
 	else if(Command("WritePic"))
-	{//WritePic-xxx-xxx-xxx	//长-宽-传输次数
-		for(int i=0;i<20;i++)
-		{
-			usart1_buff[i]-='0';
-		}
-		F4_data[0] = usart1_buff[9]*100;
-		F4_data[0] += usart1_buff[10]*10;
-		F4_data[0] += usart1_buff[11];
-		F4_data[1] = usart1_buff[13]*100;
-		F4_data[1] += usart1_buff[14]*10;
-		F4_data[1] += usart1_buff[15];
-		F4_data[2] = usart1_buff[17]*100;
-		F4_data[2] += usart1_buff[18]*10;
-		F4_data[2] += usart1_buff[19];
-		U_Printf("接收到:[%d-%d-%d] \r\n",F4_data[0],F4_data[1],F4_data[2]);
+	{
+		Read_Pic();
+	}
+	else if(Command("ShowPic"))
+	{
+		PIC_INFO[1].wq_times = 15;
+		PIC_INFO[1].width = 160;
+		PIC_INFO[1].height = 90;
+		PIC_INFO[1].pixel_count = 160*90;
+		Show_Pic(1,0);
+	}
+	else if(Command("ReadInfo"))
+	{
+		for(int i=0;i<3;i++)
+		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
+		U_Printf("aaaa \r\n");
+		ReadPicInfo();
+	}
+	else if(Command("CHPIC"))
+	{
+		pic_index = usart1_buff[6]-'1';
+		U_Printf("更换到%d张图片 \r\n",pic_index);
 	}
 	else if(Command("TTT"))
 	{

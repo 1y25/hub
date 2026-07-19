@@ -20,7 +20,7 @@ void WQ_Read(uint32_t addr,uint8_t* bytes,uint16_t length);
 void WQ_Erease(uint32_t addr_xxx000);
 void WQ_Test(void);
 void WQ_WriteStart(uint32_t addr_xxxx00);
-void WQ_WriteStop();
+void WQ_WriteStop(void);
 void WQ_ReadStart(uint32_t addr_xxxx00);
 void WQ_ReadStop(void);
 

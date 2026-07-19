@@ -103,7 +103,7 @@ void U_InitDMA(void)
 	usart1_isdma = 1;
 	usart1_isbuff = 0;
 	//调整波特率
-	U_Printf("为了传输速率，接下来波特率将调整为115200 \r\n");
+//	U_Printf("为了传输速率，接下来波特率将调整为115200 \r\n");
 	USART_Cmd(USART1,DISABLE);
 	USART_InitTypeDef USART_InitStruct;
 	USART_InitStruct.USART_BaudRate = 115200;

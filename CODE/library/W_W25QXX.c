@@ -324,7 +324,7 @@ void WQ_WaitProcess(void)
 	uint8_t aaa = WQ_Swap(0x05);
 	while((aaa&0x01)==1)
 	{
-		U_Printf("wait wq write enable\r\n");
+//		U_Printf("wait wq write enable\r\n");
 		aaa = WQ_Swap(0x05);
 	}
 	WQ_Stop();
