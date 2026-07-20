@@ -30,9 +30,10 @@ void Init_ADC(void)
 	//ADC时钟分频
 	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
 	//设置ADC通道
-	ADC_RegularChannelConfig(ADC1,ADC_Channel_2,1,ADC_SampleTime_55Cycles5);
-	ADC_RegularChannelConfig(ADC1,ADC_Channel_3,2,ADC_SampleTime_55Cycles5);
-	ADC_RegularChannelConfig(ADC1,ADC_Channel_4,3,ADC_SampleTime_55Cycles5);
+	ADC_RegularChannelConfig(ADC1,ADC_Channel_Vrefint,1,ADC_SampleTime_55Cycles5);
+	ADC_RegularChannelConfig(ADC1,ADC_Channel_2,2,ADC_SampleTime_55Cycles5);
+	ADC_RegularChannelConfig(ADC1,ADC_Channel_3,3,ADC_SampleTime_55Cycles5);
+	ADC_RegularChannelConfig(ADC1,ADC_Channel_4,4,ADC_SampleTime_55Cycles5);
 	//外设初始化
 	ADC_InitTypeDef ADC_InitStruct;
 	ADC_InitStruct.ADC_ContinuousConvMode = ENABLE;

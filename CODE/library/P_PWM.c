@@ -64,11 +64,22 @@ void Init_PWM(void)
   */
 void Task_PWM(void* pvParameters)
 {
-	int16_t pwm_pulse = 10;
-	int16_t position = 2;
+	int16_t pwm_pulse = 0;
+	int16_t position = 20;
 	while(1)
 	{
-		vTaskDelay(15);
+		vTaskDelay(20);
+		if(pwm_pulse>=1000)
+		{
+			vTaskDelay(1000);
+			position = -20;
+		}
+		else if(pwm_pulse<=0)
+		{
+			vTaskDelay(2000);
+			position = 20;
+		}
+		pwm_pulse += position;
 		switch(PWM_CHX)
 		{
 		case 1:TIM_SetCompare1(PWM_TIMX,pwm_pulse);break;
@@ -76,17 +87,7 @@ void Task_PWM(void* pvParameters)
 		case 3:TIM_SetCompare3(PWM_TIMX,pwm_pulse);break;
 		case 4:TIM_SetCompare4(PWM_TIMX,pwm_pulse);break;
 		}
-		pwm_pulse += position;
-		if(pwm_pulse>=160)
-		{
-			vTaskDelay(1000);
-			position = -2;
-		}
-		else if(pwm_pulse<=0)
-		{
-			vTaskDelay(2000);
-			position = 2;
-		}
+		
 	}
 }
 

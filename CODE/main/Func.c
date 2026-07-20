@@ -6,24 +6,61 @@
 #include "W_W25QXX.h"
 #include "TFT_DMA.h"
 
-pic_infor PIC_INFO[4];
+pic_infor PIC_INFO[5];
 uint8_t pic_index = 1;
+int8_t write_sign = 0;
+int16_t pic_delay = 50;
 extern uint8_t ram_hub[1024*2];
 extern uint8_t usart1_buff[64];
 extern int8_t usart1_isbuff;
 extern uint16_t usart1_count;
+/**@brief  测试函数初始化
+  */
 void Init_Func(void)
 {
 	U_Printf("Func初始化完成 \r\n");
 }
+/**@brief  测试线程
+  */
 void Task_Func(void* pvParameters)
 {
 	while(1)
 	{
-		ShowPic_WithFrame(pic_index);
 		vTaskDelay(90);
 	}
 }
+/**@brief  多帧动画连续显示，通常设置0.1s切换一张图片
+  *@param  index  显示动画的下标，涉及在W25Q64的读取位置
+  */
+void ShowPic_WithFrame(uint8_t index)
+{
+	uint16_t frame = PIC_INFO[index].frame;
+	for(int i=0;i<=frame;i++)
+	{
+		Show_Pic(index,i);
+		vTaskDelay(pic_delay-2);
+		if(write_sign!=0)
+		{
+			return;
+		}
+	}
+}
+/**@brief  显示动画的线程
+  */
+void Task_ShowPic(void* pvParameters)
+{
+	while(1)
+	{
+		ShowPic_WithFrame(pic_index);
+		if(write_sign!=0)
+		{
+			write_sign = 0;
+			WritePicInfo();
+		}
+	}
+}
+/**@brief  从串口写入一帧图片，需要命令字和python程序配合
+  */
 uint16_t param_a[5];
 void Read_Pic(void)
 {
@@ -63,9 +100,9 @@ void Read_Pic(void)
 	
 	
 	U_Printf("ReadyToReadPic \r\n");
-	vTaskDelay(100);
+	vTaskDelay(300);
 	U_InitDMA();	//把USART初始化为115200
-	vTaskDelay(100);
+	vTaskDelay(300);
 	for(int i=0;i<param_a[0];i++)
 	{
 		WQ_Erease(addr+i);
@@ -88,6 +125,8 @@ void Read_Pic(void)
 	Show_Pic(index,param_a[4]);
 	WritePicInfo();
 }
+/**@brief  显示单张图片
+  */
 void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 {
 	uint16_t temp_addr = pic_index*2;
@@ -120,11 +159,14 @@ void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 	}
 	TFTD_Stop();
 }
+/**@brief  读取存在W25Q64中的图片数据
+  */
 void ReadPicInfo(void)
 {
+	int i=0;
 	WQ_RamRead(0,0);
 	uint32_t* temp_ram = (uint32_t*)&ram_hub[0];
-	for(int i=0;i<4;i++)
+	for(;i<5;i++)
 	{
 		PIC_INFO[i].frame			=	temp_ram[i*10+0];
 		PIC_INFO[i].height			=   temp_ram[i*10+1];
@@ -138,12 +180,18 @@ void ReadPicInfo(void)
 		}
 //		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
 	}
+	pic_index = temp_ram[++i];
+	pic_delay = temp_ram[++i];
+	U_Printf("W25Q64读取文件头 \r\n");
 }
+/**@brief  在W25Q64的0x000000写入图片数据
+  */
 void WritePicInfo(void)
 {
+	int i=0;
 	WQ_Erease(0);
 	uint32_t* temp_ram = (uint32_t*)&ram_hub[0];
-	for(int i=0;i<4;i++)
+	for(i=0;i<5;i++)
 	{
 		temp_ram[i*10+0] = PIC_INFO[i].frame;
 		temp_ram[i*10+1] = PIC_INFO[i].height;
@@ -152,31 +200,11 @@ void WritePicInfo(void)
 		temp_ram[i*10+4] = PIC_INFO[i].width;
 		temp_ram[i*10+5] = PIC_INFO[i].wq_times;
 	}
+	temp_ram[++i] = pic_index;
+	temp_ram[++i] = pic_delay;
 	WQ_RamWrite(0,0);
+	U_Printf("W25Q64已更新文件头 \r\n");
 }
-void ShowPic_WithFrame(uint8_t index)
-{
-	uint16_t frame = PIC_INFO[index].frame;
-	for(int i=0;i<=frame;i++)
-	{
-		Show_Pic(index,i);
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

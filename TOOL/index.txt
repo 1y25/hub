@@ -1,0 +1,5 @@
+安装python后
+pip install pyserial
+改flashpic.py中的串口号
+python flashpic.py ./文件夹 x[图片下标] x[图片帧数量]
+

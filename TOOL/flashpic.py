@@ -6,7 +6,7 @@ import os
 import argparse
 
 # ================== 配置 ==================
-PORT = "COM3"          # 改成你的串口
+PORT = "COM24"          # 改成你的串口
 LOW_BAUD = 9600
 HIGH_BAUD = 115200
 PACKET_SIZE = 2048

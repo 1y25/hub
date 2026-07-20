@@ -15,6 +15,8 @@
 #include "TFT_DMA.h"
 	//W25Q64存储芯片
 #include "W_W25QXX.h"
+	//ADC
+#include "A_ADC.h"
 
 /* 2026/7/17-12:51
  * 写软件驱动好麻烦.....
@@ -36,12 +38,15 @@ void Start_MainTask(void* pvParameters)
 	Init_TFTD();
 	Init_WQ();
 	ReadPicInfo();
+	Init_ADC();
 	
 	//进入临界区
 	taskENTER_CRITICAL();
 		//线程函数-格式建议用Task_Xxx
 	xTaskCreate(Task_Func,"Func",64,NULL,1,NULL);
 	xTaskCreate(Task_PWM,"PWM",32,NULL,1,NULL);
+	vTaskDelay(100);
+	xTaskCreate(Task_ShowPic,"ShowPic",128,NULL,9,NULL);
 	
 	
 	//退出临界区
@@ -58,6 +63,8 @@ uint8_t ram_hub[1024*2];
 extern uint8_t usart1_buff[64];
 extern int8_t usart1_isbuff;
 extern uint16_t usart1_count;
+extern int8_t write_sign;
+extern uint16_t pic_delay;
 uint8_t Start_CommandFunc(void)
 {
 	if(Command("Start_CommandFunc"))
@@ -69,78 +76,40 @@ uint8_t Start_CommandFunc(void)
 	{
 		U_Printf("这里是stm32f103c8t6的测试程序 \r\n");
 		U_Printf("现在在写hubV2相关驱动 \r\n");
+		U_Printf("需要用Tool中的FlashPic.py烧录图片 \r\n");
+		U_Printf("例如:python FlashPic.py ./chaofan/ 3 37 \r\n");
+		U_Printf("指，将./chaofan/文件夹中的37张图片烧录到W25Q64的第三个位置上(共4个放图片的位置) \r\n");
+		U_Printf("其他指令： \r\n");
+		U_Printf("ReadInfo : 检查文件头 \r\n");
+		U_Printf("CHPIC-x : 切换图片到第x张 \r\n");
+		U_Printf("SetDelay-xx : 更改帧间隔，值越大屏幕刷新越慢 \r\n");
 	}
 	else if(Command("WritePic"))
 	{
 		Read_Pic();
 	}
-	else if(Command("ShowPic"))
-	{
-		PIC_INFO[1].wq_times = 15;
-		PIC_INFO[1].width = 160;
-		PIC_INFO[1].height = 90;
-		PIC_INFO[1].pixel_count = 160*90;
-		Show_Pic(1,0);
-	}
 	else if(Command("ReadInfo"))
 	{
 		ReadPicInfo();
-		for(int i=1;i<4;i++)
-		U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
+		for(int i=1;i<5;i++)
+		{
+			U_Printf("PIC_INFO[%d]:[%d*%d],frame:%d,pixel_counts:%d \r\n",i,PIC_INFO[i].width,PIC_INFO[i].height,PIC_INFO[i].frame+1,PIC_INFO[i].pixel_count);
+		}
+		U_Printf("当前显示图片下标: %d \r\n",pic_index);
+		U_Printf("图片帧间隔：%d(+50ms)(屏幕刷新占用约50ms) \r\n",pic_delay);
 	}
 	else if(Command("CHPIC"))
 	{
 		pic_index = usart1_buff[6]-'0';
 		U_Printf("更换到%d张图片 \r\n",pic_index);
+		write_sign = 1;
 	}
-	else if(Command("TTT"))
+	else if(Command("SetDelay"))
 	{
-		//进入含DMA的115200传输
-		U_InitDMA();
-		//等待
-		while(usart1_isbuff==0);
-		
-		//接收到数据
-		WQ_Erease(0x22);
-		WQ_RamWrite(0x22,1);
-		U_Printf("115200传输结束，改回9600 \r\n");
-		vTaskDelay(7000);
-		
-		U_DeInitDMA();
-	}
-	else if(Command("READ"))
-	{
-		U_Printf("啊？ \r\n");
-		for(int i=0;i<2048;i++)
-		{
-			ram_hub[i] = 'a';
-		}
-		WQ_RamRead(0x22,1);
-		for(int i=0;i<2048;i++)
-		{
-			U_Putchar(ram_hub[i]);
-		}
-	}
-	else if(Command("TFT"))
-	{
-		TFTD_SetRect(20,30,120,68);
-				//开始通信
-		TFTD_Start();
-				//DMA输出处理
-		for(int j=0;j<10;j++)
-		{
-			for(int i=0;i<12*68*2;i++)
-			{
-				ram_hub[i] = i;
-			}
-			DMA_Cmd(DMA1_Channel5,DISABLE);
-			DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
-			DMA_Cmd(DMA1_Channel5,ENABLE);
-			while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
-			DMA_ClearFlag(DMA1_FLAG_TC5);
-		}
-			//结束通信
-		TFTD_Stop();
+		pic_delay = 10*(usart1_buff[9]-'0');
+		pic_delay += (usart1_buff[10]-'0');
+		U_Printf("帧间隔更改为:%d \r\n",pic_delay);
+		write_sign = 1;
 	}
 	//结束
 	else

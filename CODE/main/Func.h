@@ -17,5 +17,6 @@ void Task_Func(void* pvParameters);
 void WritePicInfo(void);
 void ReadPicInfo(void);
 void ShowPic_WithFrame(uint8_t index);
+void Task_ShowPic(void* pvParameters);
 
 #endif
