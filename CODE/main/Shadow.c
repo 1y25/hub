@@ -17,6 +17,9 @@
 #include "W_W25QXX.h"
 	//ADC
 #include "A_ADC.h"
+	//在屏幕上显示ADC
+#include "UI_DEF.h"
+#include "TFT_font.h"
 
 /* 2026/7/17-12:51
  * 写软件驱动好麻烦.....
@@ -38,16 +41,18 @@ void Start_MainTask(void* pvParameters)
 	Init_TFTD();
 	Init_WQ();
 	ReadPicInfo();
-	Init_ADC();
+//	Init_ADC();
+//	Init_UI();
+//	Init_UIFrame();
 	
 	//进入临界区
 	taskENTER_CRITICAL();
 		//线程函数-格式建议用Task_Xxx
 	xTaskCreate(Task_Func,"Func",64,NULL,1,NULL);
 	xTaskCreate(Task_PWM,"PWM",32,NULL,1,NULL);
+//	xTaskCreate(Task_ADC,"ADC",128,NULL,2,NULL);
 	vTaskDelay(100);
 	xTaskCreate(Task_ShowPic,"ShowPic",128,NULL,9,NULL);
-	
 	
 	//退出临界区
 	taskEXIT_CRITICAL();

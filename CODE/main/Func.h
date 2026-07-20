@@ -18,5 +18,6 @@ void WritePicInfo(void);
 void ReadPicInfo(void);
 void ShowPic_WithFrame(uint8_t index);
 void Task_ShowPic(void* pvParameters);
+void Init_UIFrame(void);
 
 #endif

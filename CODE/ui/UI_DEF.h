@@ -3,22 +3,12 @@
 #include "stdint.h"
 
 /* 颜色 */
-#define COLOR_BLACK 		0
-#define COLOR_BLUE			1
-#define COLOR_RED			2
-#define COLOR_YELLOW		3
-#define COLOR_GREEN			4
-#define COLOR_WATER			5
-#define COLOR_PURPLE		6
-#define COLOR_PETCH			7
-#define COLOR_ORIANGE		8
-#define COLOR_LIGHT_GREEN	9
-#define COLOR_DARK_BLUE		10
-#define COLOR_DARK_RED 		11
-#define COLOR_GOLD			12
-#define COLOR_LIGHT_WHITE	13
-#define COLOR_MOON			14
-#define COLOR_WHITE			15
+#define COLOR_BLACK		0
+#define COLOR_BLUE		1
+#define COLOR_WHITE1	2
+#define COLOR_PINK		3
+#define COLOR_WHITE		4
+#define COLOR_NUM		5
 
 /* 字体 */
 /* 需要引入TFT_font.h */

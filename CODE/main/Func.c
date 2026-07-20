@@ -29,6 +29,18 @@ void Task_Func(void* pvParameters)
 		vTaskDelay(90);
 	}
 }
+/**@breif  显示ADC的框架
+  */
+#include "UI_DEF.h"
+extern uint16_t COLOR[];
+void Init_UIFrame(void)
+{
+	uint8_t adc_y = 103;
+	uint8_t Frame_color = COLOR_WHITE;
+	UI_Draw_Frame(1,100,160,30,COLOR[Frame_color],3);
+	UI_Draw_Rect(54,103,2,24,  COLOR[Frame_color]);
+	UI_Draw_Rect(106,103,2,24, COLOR[Frame_color]);
+}
 /**@brief  多帧动画连续显示，通常设置0.1s切换一张图片
   *@param  index  显示动画的下标，涉及在W25Q64的读取位置
   */
@@ -135,6 +147,7 @@ void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 	uint32_t pixel_counts = PIC_INFO[pic_index].pixel_count;
 	uint16_t x = (162-PIC_INFO[pic_index].width)/2;
 	uint16_t y = (130-PIC_INFO[pic_index].height)/2;
+//	uint16_t x=0,y=0;
 	TFTD_SetRect(x,y,PIC_INFO[pic_index].width,PIC_INFO[pic_index].height);
 	TFTD_Start();
 	for(int i=0;i<PIC_INFO[pic_index].wq_times;i++)
