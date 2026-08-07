@@ -1,67 +1,81 @@
-## 带有电流表的扩展坞            
-*2026/5/31*                         
-尺寸依然是7cm*5cm，              
-每个下游端口都配备了一个INA180来放大采样电阻电压测电流          
-还加了一个1.8寸的屏幕的软排线座 用来放屏幕                     
-自带USB转串口芯片，还有排针引出              
-总之w 还挺满意的....                
+# 拓展坞 + 屏幕 · STM32F103C8T6
 
-<hr>          
-       
-## 实拍图片
-                   
-<img src="./README_SRC/pic0.jpg" width=50%>                
-                      
-<hr>               
-        
-### **问题是：**             
-在远离输入端口的输出端口位置接大电流(***>200mA***)负载时，              
-靠近输入端的端口就算**没接负载**也会有大概10~24mA被检测，              
-在飞线测试时，发现每个输出端口的供电输入单独一根线即可避免。       
-虽然现象可能已经解决，
-但理论分析可能需要补习关于***电源完整性(PI)***的内容。            
-* ***两种布线方式：***                
-（*关注电源线走线*）              
-<img src="./README_SRC/usb_v.png" width=80%>        
+USB 拓展坞板载 **1.8 寸 ST7735 屏幕**，通过串口把**动图**烧进 W25Q64 外挂 Flash，上电自动循环播放。
 
-上图为这块电路板，                     
-电源输入(绿)进入后几乎以串联的方式依次通过各个输出端口，          
-推测有一定的电容影响，降低高频阻抗，               
-放大了这种布线方式带来的电流问题。           
+## 快速开始（clone 下来就能用）
 
-下图为最近测试画的一块电路板，类似的布局方式与电容电阻。                
-但电源线(绿)从输入排针开始，分别走三条线，                  
-同时电容的位置也放到了采样电阻与电源输入线之间，                         
-等待板子到货后实际测试。          
+```
+git clone https://github.com/TakoyakiFuwa/hub.git
+```
 
-(2026/5/31-23:14)
+### ① 硬件接线
 
-<hr>
+| 屏幕信号 | STM32 引脚 |
+|---|---|
+| SCK | PB13（SPI2 硬件） |
+| MOSI | PB15（SPI2 硬件） |
+| RST | PB7 |
+| DC | PB6 |
+| CS | PB5 |
+| 背光 BL | PB14（高电平亮） |
 
-## EDA：          
-<img src="./README_SRC/eda0.png" width=80%>
-<img src="./README_SRC/eda1.png" width=80%>
-<img src="./README_SRC/eda2.png" width=80%>
+| W25Q64 | STM32 引脚 |
+|---|---|
+| CS | PB1 |
+| CLK | PA5 |
+| DI(MOSI) | PA7 |
+| DO(MISO) | PA6 |
 
-<hr>
+串口：PA9(TX) / PA10(RX)，USB-TTL 接 COM 口。
 
-2026/5/31-22:30                         
-好像是4/6开始创建的文件夹....             
-从制版到现在居然整整用了快两个月....            
-其实好像板子用了一周就画好了，
-到货了之后一直不想焊的意思....
-嘛....
+### ② 编译固件（只需一次）
 
+1. 用 **Keil MDK5** 打开 `CODE_MYHUB/o/project.uvprojx`
+2. 器件确认 **STM32F103C8**（Options for Target → Device）
+3. **F7 编译** → **LOAD 烧录**（ST-Link）
+4. 上电屏幕先刷三色条 → 播放 W25Q64 里已有的动画
 
+### ③ 动图制作 + 烧录（每次换动画）
 
+需要 Python 3 + `pip install pillow pyserial`：
 
+```
+python CODE_MYHUB/TOOL/img2c.py 动图.gif --out .\mygif --size 160x128 --frames 25 --autocenter
+```
 
+改 `CODE_MYHUB/TOOL/flashpic.py` 顶部 `PORT = "COMx"`（你的串口号），然后：
 
+```
+python CODE_MYHUB/TOOL/flashpic.py .\mygif 2 25
+```
 
+烧完自动重启播放。**每库最多 25 帧（160x128 全屏），共 4 个图库**。
 
+### ④ 串口指令（9600）
 
+| 指令 | 作用 |
+|---|---|
+| `CHPIC-x` | 切换图库 1~4 |
+| `SetDelay-xx` | 帧间隔（默认 50） |
+| `ReadInfo` | 查看各图库信息 |
+| `COMMAND` | 帮助 |
 
+## 工具一览（`CODE_MYHUB/TOOL/`）
 
+- `img2c.py` — 动图/图片 → 屏幕帧 `.c` 文件（支持 GIF 拆帧、抽帧、自动居中）
+- `flashpic.py` — 串口把帧烧进 W25Q64
+- `upres_c.py` — 旧 `.c` 帧直接转 160x128 全屏
 
+## 目录结构
 
+```
+CODE_MYHUB/      ← 本项目的 Keil 工程 + 工具 + 说明
+CODE/            ← 参考项目（hubV2 原作者工程，未改动）
+TOOL/            ← 原版上位机工具
+EDA/             ← 立创 EDA 工程
+```
 
+## 详细文档
+
+- 本项目完整说明：**`CODE_MYHUB/README.md`**
+- 参考项目说明：`readme.md`（原作者的拓展坞 v2 记录）
