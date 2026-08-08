@@ -115,46 +115,26 @@ void Init_TFTD(void)
 	DMA_ClearFlag(DMA1_FLAG_TC5);
 	
 	//测试图像
-		//蓝粉白
+		//蓝粉白(正常显示)
 	uint8_t width = 133/3 +1;
 	uint16_t blue  = (uint16_t)TFT_RGB888To565(0x5FCDE4);
-	uint16_t white = (uint16_t)TFT_RGB888To565(0xFFFFFF); 
+	uint16_t white = (uint16_t)TFT_RGB888To565(0xFFFFFF);
 	uint16_t pink  = (uint16_t)TFT_RGB888To565(0xFFB6C1);
-	TFTD_SetRect(0,0,168,width);
-	for(int i=0;i<width*168;i++)
+	TFTD_SetRect(0,0,160,width);
+	for(int i=0;i<width*160;i++)
 	{
 		TFTD_WriteData16(pink);
 	}
-	TFTD_SetRect(0,width,168,width);
-	for(int i=0;i<width*168;i++)
+	TFTD_SetRect(0,width,160,width);
+	for(int i=0;i<width*160;i++)
 	{
 		TFTD_WriteData16(white);
 	}
-	TFTD_SetRect(0,width*2,168,width);
-	for(int i=0;i<width*168;i++)
+	TFTD_SetRect(0,width*2,160,width);
+	for(int i=0;i<width*160;i++)
 	{
 		TFTD_WriteData16(blue);
 	}
-//		//输出Smol Miku
-//	TFTD_SetRect(20,30,120,68);
-//			//开始通信
-//	TFTD_Start();
-//			//DMA输出处理
-//	for(int j=0;j<10;j++)
-//	{
-//		for(int i=0;i<12*68*2;i++)
-//		{
-//			ram_hub[i] = IMG_120_68[j*12*68*2+i];
-//		}
-//		DMA_Cmd(DMA1_Channel5,DISABLE);
-//		DMA_SetCurrDataCounter(DMA1_Channel5,12*68);
-//		DMA_Cmd(DMA1_Channel5,ENABLE);
-//		while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
-//		DMA_ClearFlag(DMA1_FLAG_TC5);
-//	}
-//			//结束通信
-//	TFTD_Stop();
-//	
 	U_Printf("TFT_withDMA初始化完成 \r\n");
 }
 void Task_TFTD(void* pvParameters)
@@ -188,14 +168,17 @@ void TFTD_WriteData(uint8_t data)
 }
 void TFTD_SetRect(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-	//标准映射: 0x2A=CASET(X列) 0x2B=RASET(Y行), 与img2c行优先像素排列对齐
+	//标准映射(CASET=X, RASET=Y) + 面板可视区偏移
+	//MV=1横屏下偏移交换: CASET+1(原Y方向偏移), RASET+2(原X方向偏移)
+	#define TFT_PANEL_XOFF 1
+	#define TFT_PANEL_YOFF 2
 	TFTD_WriteCmd(0x2a);
-	TFTD_WriteData16(x);
-	TFTD_WriteData16(x+width-1);
+	TFTD_WriteData16(x+TFT_PANEL_XOFF);
+	TFTD_WriteData16(x+TFT_PANEL_XOFF+width-1);
 
 	TFTD_WriteCmd(0x2b);
-	TFTD_WriteData16(y);
-	TFTD_WriteData16(y+height-1);
+	TFTD_WriteData16(y+TFT_PANEL_YOFF);
+	TFTD_WriteData16(y+TFT_PANEL_YOFF+height-1);
 
 	TFTD_WriteCmd(0x2c);
 }
@@ -215,13 +198,12 @@ void TFTD_WriteData16(uint16_t rgb565)
   *@param  buf    像素缓冲区(小端RGB565, 与W25Q64中存储一致)
   *@param  count  16位像素个数(一次不超过1024)
   *@retval void
+  *@note   CS保持低不切换(由TFTD_Start/Stop控制整帧), 避免块间断流产生横纹
   */
 void TFTD_WriteHalfWords(const uint16_t* buf, uint32_t count)
 {
 	//数据
 	PIN_TFTD_DC_Data();
-	//片选选中	
-	PIN_TFTD_CS_Low();
 	if(count>1024)
 	{
 		count = 1024;
@@ -245,8 +227,7 @@ void TFTD_WriteHalfWords(const uint16_t* buf, uint32_t count)
 	DMA_ClearFlag(DMA1_FLAG_TC5);
 	while(DMA_GetFlagStatus(DMA1_FLAG_TC5)!=SET);
 	DMA_ClearFlag(DMA1_FLAG_TC5);
-	//片选结束
-	PIN_TFTD_CS_High();
+	//不拉高CS, 保持整帧连续(避免横纹)
 }
 void TFTD_Start(void)
 {
@@ -314,10 +295,9 @@ static void TFTD_SoftwareInit(void)
 	TFTD_WriteData(0x0E); 
 	
 	//Y反转-X反转-XY调换-Y刷新方向-RGB(0)/BGR(1)-X刷新方向-0-0
-	//★ 横屏(MV=1) MY=1(上下对) MX=0(取消左右镜像) = 0x60
-	//  若再有问题, 可换 0x20 / 0xE0 / 0xA0 试
+	//★ MV=1横屏 + 左右镜像(实测绿左上红右上) → MX翻为0 → 0x60
 	TFTD_WriteCmd(0x36); //MX, MY, RGB mode
-	TFTD_WriteData(0x60); //0110 0000 (MV=1横屏 MY=1, MX=0不镜像)
+	TFTD_WriteData(0x60); //0110 0000 (MV=1 MY=1 MX=0)
 	
 	//ST7735R Gamma Sequence
 	TFTD_WriteCmd(0xe0); 

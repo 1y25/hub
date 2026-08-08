@@ -52,7 +52,7 @@ void Start_MainTask(void* pvParameters)
 	xTaskCreate(Task_PWM,"PWM",32,NULL,1,NULL);
 //	xTaskCreate(Task_ADC,"ADC",128,NULL,2,NULL);
 	vTaskDelay(100);
-	xTaskCreate(Task_ShowPic,"ShowPic",128,NULL,9,NULL);
+	xTaskCreate(Task_ShowPic,"ShowPic",128,NULL,9,NULL);	//恢复动画播放
 	
 	//退出临界区
 	taskEXIT_CRITICAL();
