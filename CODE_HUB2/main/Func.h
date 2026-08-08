@@ -19,8 +19,5 @@ void ReadPicInfo(void);
 void ShowPic_WithFrame(uint8_t index);
 void Task_ShowPic(void* pvParameters);
 void Init_UIFrame(void);
-void Init_Button(void);
-void Task_Button(void* pvParameters);
-void Init_BreathLED(void);
 
 #endif

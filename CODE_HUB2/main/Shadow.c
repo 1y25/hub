@@ -40,8 +40,6 @@ void Start_MainTask(void* pvParameters)
 	Init_PWM();
 	Init_TFTD();
 	Init_WQ();
-	Init_Button();	//按键(PA1帧间隔/PA2切图库)
-	Init_BreathLED();	//PC13呼吸灯
 	ReadPicInfo();
 //	Init_ADC();
 //	Init_UI();
@@ -52,7 +50,6 @@ void Start_MainTask(void* pvParameters)
 		//线程函数-格式建议用Task_Xxx
 	xTaskCreate(Task_Func,"Func",64,NULL,1,NULL);
 	xTaskCreate(Task_PWM,"PWM",32,NULL,1,NULL);
-	xTaskCreate(Task_Button,"Button",128,NULL,3,NULL);	//按键扫描
 //	xTaskCreate(Task_ADC,"ADC",128,NULL,2,NULL);
 	vTaskDelay(100);
 	xTaskCreate(Task_ShowPic,"ShowPic",128,NULL,9,NULL);	//恢复动画播放
@@ -114,13 +111,8 @@ uint8_t Start_CommandFunc(void)
 	}
 	else if(Command("SetDelay"))
 	{
-		//支持2~3位: SetDelay-50 / SetDelay-200
 		pic_delay = 10*(usart1_buff[9]-'0');
 		pic_delay += (usart1_buff[10]-'0');
-		if(usart1_buff[11]>='0' && usart1_buff[11]<='9')
-		{
-			pic_delay = pic_delay*10 + (usart1_buff[11]-'0');
-		}
 		U_Printf("帧间隔更改为:%d \r\n",pic_delay);
 		write_sign = 1;
 	}
