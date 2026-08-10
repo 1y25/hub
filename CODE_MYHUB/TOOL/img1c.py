@@ -86,6 +86,8 @@ def main():
     parser.add_argument("--frames", type=int, default=None, help="最多保留N帧(超出均匀抽帧)")
     parser.add_argument("--swap-rb", action="store_true", help="红蓝交换")
     parser.add_argument("--bin", action="store_true", help="同时输出 .bin")
+    parser.add_argument("--flip-v", action="store_true", help="上下翻转(屏幕MY位不生效时用)")
+    parser.add_argument("--flip-h", action="store_true", help="左右翻转(屏幕MX位不生效时用)")
     args = parser.parse_args()
 
     size = None
@@ -132,6 +134,13 @@ def main():
     # 统一缩放到目标尺寸
     if size:
         frames = [img.resize(size, Image.LANCZOS) for img in frames]
+    # 方向修正(屏幕MADCTL位不生效时, 从数据层翻转)
+    if args.flip_v:
+        frames = [img.transpose(Image.FLIP_TOP_BOTTOM) for img in frames]
+        print("🔄 上下翻转已应用")
+    if args.flip_h:
+        frames = [img.transpose(Image.FLIP_LEFT_RIGHT) for img in frames]
+        print("🔄 左右翻转已应用")
 
     os.makedirs(args.out, exist_ok=True)
 

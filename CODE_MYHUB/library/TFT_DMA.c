@@ -115,26 +115,7 @@ void Init_TFTD(void)
 	DMA_ClearFlag(DMA1_FLAG_TC5);
 	
 	//测试图像
-		//蓝粉白(正常显示)
-	uint8_t width = 133/3 +1;
-	uint16_t blue  = (uint16_t)TFT_RGB888To565(0x5FCDE4);
-	uint16_t white = (uint16_t)TFT_RGB888To565(0xFFFFFF);
-	uint16_t pink  = (uint16_t)TFT_RGB888To565(0xFFB6C1);
-	TFTD_SetRect(0,0,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(pink);
-	}
-	TFTD_SetRect(0,width,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(white);
-	}
-	TFTD_SetRect(0,width*2,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(blue);
-	}
+		//删除三色条测试, 上电黑屏, 动画任务启动后直接全屏播放(无残留)
 	U_Printf("TFT_withDMA初始化完成 \r\n");
 }
 void Task_TFTD(void* pvParameters)
@@ -169,9 +150,9 @@ void TFTD_WriteData(uint8_t data)
 void TFTD_SetRect(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
 	//标准映射(CASET=X, RASET=Y) + 面板可视区偏移
-	//MV=1横屏下偏移交换: CASET+1(原Y方向偏移), RASET+2(原X方向偏移)
-	#define TFT_PANEL_XOFF 1
-	#define TFT_PANEL_YOFF 2
+	//1号板实测: 偏移(1,2)会让左上空1px, 改(0,0)贴满; 若边缘花屏再微调
+	#define TFT_PANEL_XOFF 0
+	#define TFT_PANEL_YOFF 0
 	TFTD_WriteCmd(0x2a);
 	TFTD_WriteData16(x+TFT_PANEL_XOFF);
 	TFTD_WriteData16(x+TFT_PANEL_XOFF+width-1);

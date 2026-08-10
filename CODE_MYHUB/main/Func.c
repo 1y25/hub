@@ -285,7 +285,7 @@ void Show_Pic(uint8_t pic_index,uint8_t frame_index)
 	temp_addr -= 1;
 	uint16_t addr = (temp_addr<<8)+(frame_index*PIC_FRAME_SECTORS);
 	uint32_t pixel_counts = PIC_INFO[pic_index].pixel_count;
-	//居中显示, 图比屏幕大时从(0,0)开始(防止坐标下溢)
+	//居中显示: 基准用屏幕显示区(162x130, 参考项目原值), 图162x130正好(0,0)盖满
 	int16_t x = (162-PIC_INFO[pic_index].width)/2;
 	int16_t y = (130-PIC_INFO[pic_index].height)/2;
 	if(x<0) x = 0;

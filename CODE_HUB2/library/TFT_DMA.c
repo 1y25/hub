@@ -28,15 +28,15 @@
  *	PB5	->CS
  */
 
-//RST ->PB7
-#define PIN_TFTD_RST_High()	GPIOB->BSRR = GPIO_Pin_7
-#define PIN_TFTD_RST_Low()	GPIOB->BRR  = GPIO_Pin_7
-//DC  ->PB6
-#define PIN_TFTD_DC_Data()	GPIOB->BSRR = GPIO_Pin_6
-#define PIN_TFTD_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_6
-//CS  ->PB5
-#define PIN_TFTD_CS_High()	GPIOB->BSRR = GPIO_Pin_5
-#define PIN_TFTD_CS_Low()	GPIOB->BRR  = GPIO_Pin_5
+//RST ->PB11(2号板)
+#define PIN_TFTD_RST_High()	GPIOB->BSRR = GPIO_Pin_11
+#define PIN_TFTD_RST_Low()	GPIOB->BRR  = GPIO_Pin_11
+//DC  ->PB10(2号板)
+#define PIN_TFTD_DC_Data()	GPIOB->BSRR = GPIO_Pin_10
+#define PIN_TFTD_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_10
+//CS  ->PB12(2号板)
+#define PIN_TFTD_CS_High()	GPIOB->BSRR = GPIO_Pin_12
+#define PIN_TFTD_CS_Low()	GPIOB->BRR  = GPIO_Pin_12
 
 /**@brief  引脚初始化
   */
@@ -51,9 +51,9 @@ static void Init_TFTD_Pin(void)
 	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_15|GPIO_Pin_13;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB,&GPIO_InitStruct);
-		//其他引脚(RST=PB7 DC=PB6 CS=PB5 背光=PB14)
+		//其他引脚(RST=PB11 DC=PB10 CS=PB12 背光=PB14)
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_14;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12|GPIO_Pin_14;
 	GPIO_Init(GPIOB,&GPIO_InitStruct);
 	//给初始电平
 	GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);
@@ -115,26 +115,7 @@ void Init_TFTD(void)
 	DMA_ClearFlag(DMA1_FLAG_TC5);
 	
 	//测试图像
-		//蓝粉白(正常显示)
-	uint8_t width = 133/3 +1;
-	uint16_t blue  = (uint16_t)TFT_RGB888To565(0x5FCDE4);
-	uint16_t white = (uint16_t)TFT_RGB888To565(0xFFFFFF);
-	uint16_t pink  = (uint16_t)TFT_RGB888To565(0xFFB6C1);
-	TFTD_SetRect(0,0,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(pink);
-	}
-	TFTD_SetRect(0,width,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(white);
-	}
-	TFTD_SetRect(0,width*2,160,width);
-	for(int i=0;i<width*160;i++)
-	{
-		TFTD_WriteData16(blue);
-	}
+		//删除三色条测试, 上电黑屏, 动画任务启动后直接全屏播放(无残留)
 	U_Printf("TFT_withDMA初始化完成 \r\n");
 }
 void Task_TFTD(void* pvParameters)
@@ -169,9 +150,9 @@ void TFTD_WriteData(uint8_t data)
 void TFTD_SetRect(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
 	//标准映射(CASET=X, RASET=Y) + 面板可视区偏移
-	//MV=1横屏下偏移交换: CASET+1(原Y方向偏移), RASET+2(原X方向偏移)
-	#define TFT_PANEL_XOFF 1
-	#define TFT_PANEL_YOFF 2
+	//2号板(同款屏): 偏移(0,0)贴满无空边(与1号板一致)
+	#define TFT_PANEL_XOFF 0
+	#define TFT_PANEL_YOFF 0
 	TFTD_WriteCmd(0x2a);
 	TFTD_WriteData16(x+TFT_PANEL_XOFF);
 	TFTD_WriteData16(x+TFT_PANEL_XOFF+width-1);
@@ -295,10 +276,10 @@ static void TFTD_SoftwareInit(void)
 	TFTD_WriteData(0x0E); 
 	
 	//Y反转-X反转-XY调换-Y刷新方向-RGB(0)/BGR(1)-X刷新方向-0-0
-	//★ 2号拓展坞(屏上接, 与1号上下颠倒): MY翻转 0x60→0x20
-	//  若实测方向还不对, 告诉我现象再调 MX/MY
+	//★ 2号拓展坞(屏上接): MX=1镜像(需), MY=1翻转修正(0x60时上下反了)
+	//  0xE0 = MV=1 MX=1 MY=1
 	TFTD_WriteCmd(0x36); //MX, MY, RGB mode
-	TFTD_WriteData(0x20); //0010 0000 (MV=1 MY=0 MX=0)
+	TFTD_WriteData(0xE0); //1110 0000
 	
 	//ST7735R Gamma Sequence
 	TFTD_WriteCmd(0xe0); 

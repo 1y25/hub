@@ -45,15 +45,15 @@
 //SDA ->PB15
 #define PIN_TFT_SDA_High() 	GPIOB->BSRR = GPIO_Pin_15
 #define PIN_TFT_SDA_Low()	GPIOB->BRR  = GPIO_Pin_15
-//RST ->PB7
-#define PIN_TFT_RST_High()	GPIOB->BSRR = GPIO_Pin_7
-#define PIN_TFT_RST_Low()	GPIOB->BRR  = GPIO_Pin_7
-//DC  ->PB6
-#define PIN_TFT_DC_Data()	GPIOB->BSRR = GPIO_Pin_6
-#define PIN_TFT_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_6
-//CS  ->PB5
-#define PIN_TFT_CS_High()	GPIOB->BSRR = GPIO_Pin_5
-#define PIN_TFT_CS_Low()	GPIOB->BRR  = GPIO_Pin_5
+//RST ->PB11(2号板)
+#define PIN_TFT_RST_High()	GPIOB->BSRR = GPIO_Pin_11
+#define PIN_TFT_RST_Low()	GPIOB->BRR  = GPIO_Pin_11
+//DC  ->PB10(2号板)
+#define PIN_TFT_DC_Data()	GPIOB->BSRR = GPIO_Pin_10
+#define PIN_TFT_DC_Cmd()	GPIOB->BRR  = GPIO_Pin_10
+//CS  ->PB12(2号板)
+#define PIN_TFT_CS_High()	GPIOB->BSRR = GPIO_Pin_12
+#define PIN_TFT_CS_Low()	GPIOB->BRR  = GPIO_Pin_12
 
 /**@brief  内部使用 TFT屏幕相关引脚初始化 日后根据需要修改
   *@param  void
@@ -66,7 +66,7 @@ static void Init_TFTPin(void)
 	//引脚初始化
 	GPIO_InitTypeDef GPIO_InitStruct;
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init(GPIOB,&GPIO_InitStruct);
 	//给初始电平(背光高-亮)
