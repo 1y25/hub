@@ -21,6 +21,8 @@ extern volatile uint8_t rx_done;
 extern volatile uint16_t rx_packet_size;
 /* 烧录图片时置1,暂停动画播放,避免读写W25Q64的DMA通道冲突 */
 static volatile uint8_t pic_busy = 0;
+/* 息屏标志: 长按PA2进入(关背光+停动画), 短按任意键恢复 */
+volatile uint8_t screen_off = 0;
 /* 每帧占用的4KB扇区数(160x128全屏=20包=80KB, 每图库2MB最多25帧, 帧与帧不重叠) */
 #define PIC_FRAME_SECTORS 20
 
@@ -38,24 +40,69 @@ void Init_Button(void)
 	g.GPIO_Pin = GPIO_Pin_1|GPIO_Pin_2;
 	GPIO_Init(GPIOA,&g);
 }
-/**@brief  按键扫描任务: PA1循环调帧间隔, PA2循环切图库
+/**@brief  按键扫描任务: PA1循环调帧间隔, PA2短按切图库/长按息屏
   */
 void Task_Button(void* pvParameters)
 {
 	uint8_t last1 = 0;
 	uint8_t last2 = 0;
+	uint32_t press_ms = 0;		//PA2按住时长(ms)
+	uint8_t long_pressed = 0;	//本次按下是否已触发长按
 	while(1)
 	{
 		vTaskDelay(20);
 		//烧录图片期间屏蔽按键(避免与写W25Q64冲突)
-		if(pic_busy!=0)
+		if(pic_busy!=0 && !screen_off)
 		{
 			last1 = BTN_PA1_DOWN();
 			last2 = BTN_PA2_DOWN();
+			press_ms = 0;
 			continue;
 		}
 		uint8_t b1 = BTN_PA1_DOWN();
 		uint8_t b2 = BTN_PA2_DOWN();
+
+		//息屏状态: 短按任意键恢复
+		if(screen_off)
+		{
+			if((b1&&!last1)||(b2&&!last2))
+			{
+				screen_off = 0;
+				GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_SET);	//开背光
+				pic_busy = 0;	//恢复动画
+				U_Printf("已恢复 \r\n");
+			}
+			last1 = b1;
+			last2 = b2;
+			continue;
+		}
+
+		//PA2: 长按>=2秒息屏; 短按(<2s)切图库
+		if(b2)
+		{
+			press_ms += 20;
+			if(press_ms>=2000 && !long_pressed)
+			{
+				long_pressed = 1;
+				screen_off = 1;
+				GPIO_WriteBit(GPIOB,GPIO_Pin_14,Bit_RESET);	//关背光
+				pic_busy = 1;	//停动画
+				U_Printf("已息屏 \r\n");
+			}
+		}
+		else
+		{
+			if(press_ms>0 && press_ms<2000 && !long_pressed)
+			{
+				//PA2短按: 切换图库(1->2->3->4->1)
+				pic_index = pic_index%4 + 1;
+				write_sign = 1;
+				U_Printf("切到图库%d \r\n",pic_index);
+			}
+			press_ms = 0;
+			long_pressed = 0;
+		}
+
 		//PA1: 按下沿 → 帧间隔换档(10/25/50/100/200循环)
 		if(b1 && !last1)
 		{
@@ -66,13 +113,6 @@ void Task_Button(void* pvParameters)
 			else                   pic_delay = 10;
 			write_sign = 1;
 			U_Printf("帧间隔: %d \r\n",pic_delay);
-		}
-		//PA2: 按下沿 → 切换图库(1->2->3->4->1)
-		if(b2 && !last2)
-		{
-			pic_index = pic_index%4 + 1;
-			write_sign = 1;
-			U_Printf("切到图库%d \r\n",pic_index);
 		}
 		last1 = b1;
 		last2 = b2;
